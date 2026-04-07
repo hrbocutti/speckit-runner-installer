@@ -60,7 +60,7 @@ fi
 
 info "Installing Python dependencies..."
 python3 -m pip install --quiet --upgrade pip 2>/dev/null || true
-python3 -m pip install --quiet -e "$INSTALL_DIR"
+python3 -m pip install --quiet -e "$INSTALL_DIR[mcp]"
 
 # --- Symlink (if pip didn't put it on PATH) ---
 
