@@ -143,31 +143,13 @@ if [ -f "$CLAUDE_MCP" ]; then
   # Add speckit server if not already present
   if ! grep -q '"speckit"' "$CLAUDE_MCP" 2>/dev/null; then
     # Insert into existing mcpServers object
-    if command -v python3 >/dev/null 2>&1; then
-      $PYTHON -c "
-import json, sys
-with open('$CLAUDE_MCP') as f:
-    cfg = json.load(f)
-cfg.setdefault('mcpServers', {})['speckit'] = {'command': '$SPECKIT_BIN', 'args': []}
-with open('$CLAUDE_MCP', 'w') as f:
-    json.dump(cfg, f, indent=2)
-print('added')
-" && info "MCP server added to Claude Code config"
-    fi
+    $PYTHON -c "import json; f=open('$CLAUDE_MCP'); cfg=json.load(f); f.close(); cfg.setdefault('mcpServers',{})['speckit']={'command':'$SPECKIT_BIN','args':[]}; f=open('$CLAUDE_MCP','w'); json.dump(cfg,f,indent=2); f.close()" \
+      && info "MCP server added to Claude Code config"
   else
     info "MCP server already configured in Claude Code"
   fi
 else
-  cat > "$CLAUDE_MCP" << MCPEOF
-{
-  "mcpServers": {
-    "speckit": {
-      "command": "$SPECKIT_BIN",
-      "args": []
-    }
-  }
-}
-MCPEOF
+  printf '{\n  "mcpServers": {\n    "speckit": {\n      "command": "%s",\n      "args": []\n    }\n  }\n}\n' "$SPECKIT_BIN" > "$CLAUDE_MCP"
   info "MCP server configured for Claude Code (~/.claude/.mcp.json)"
 fi
 
