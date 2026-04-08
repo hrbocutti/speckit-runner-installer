@@ -136,21 +136,11 @@ if command -v speckit-runner >/dev/null 2>&1; then
   SPECKIT_BIN="$(command -v speckit-runner)"
 fi
 
-CLAUDE_MCP="$HOME/.claude/.mcp.json"
-mkdir -p "$HOME/.claude"
-
-if [ -f "$CLAUDE_MCP" ]; then
-  # Add speckit server if not already present
-  if ! grep -q '"speckit"' "$CLAUDE_MCP" 2>/dev/null; then
-    # Insert into existing mcpServers object
-    $PYTHON -c "import json; f=open('$CLAUDE_MCP'); cfg=json.load(f); f.close(); cfg.setdefault('mcpServers',{})['speckit']={'command':'$SPECKIT_BIN','args':[]}; f=open('$CLAUDE_MCP','w'); json.dump(cfg,f,indent=2); f.close()" \
-      && info "MCP server added to Claude Code config"
-  else
-    info "MCP server already configured in Claude Code"
-  fi
-else
-  printf '{\n  "mcpServers": {\n    "speckit": {\n      "command": "%s",\n      "args": []\n    }\n  }\n}\n' "$SPECKIT_BIN" > "$CLAUDE_MCP"
-  info "MCP server configured for Claude Code (~/.claude/.mcp.json)"
+if command -v claude >/dev/null 2>&1; then
+  info "Registering MCP server in Claude Code..."
+  claude mcp add speckit "$SPECKIT_BIN" -s user 2>/dev/null \
+    && success "MCP server registered globally in Claude Code" \
+    || info "MCP server already registered or claude mcp not available"
 fi
 
 # --- Verify ---
