@@ -129,6 +129,48 @@ if [ -f "$VENV_BIN" ]; then
   }
 fi
 
+# --- Configure MCP for Claude Code ---
+
+SPECKIT_BIN="$VENV_BIN"
+if command -v speckit-runner >/dev/null 2>&1; then
+  SPECKIT_BIN="$(command -v speckit-runner)"
+fi
+
+CLAUDE_MCP="$HOME/.claude/.mcp.json"
+mkdir -p "$HOME/.claude"
+
+if [ -f "$CLAUDE_MCP" ]; then
+  # Add speckit server if not already present
+  if ! grep -q '"speckit"' "$CLAUDE_MCP" 2>/dev/null; then
+    # Insert into existing mcpServers object
+    if command -v python3 >/dev/null 2>&1; then
+      $PYTHON -c "
+import json, sys
+with open('$CLAUDE_MCP') as f:
+    cfg = json.load(f)
+cfg.setdefault('mcpServers', {})['speckit'] = {'command': '$SPECKIT_BIN', 'args': []}
+with open('$CLAUDE_MCP', 'w') as f:
+    json.dump(cfg, f, indent=2)
+print('added')
+" && info "MCP server added to Claude Code config"
+    fi
+  else
+    info "MCP server already configured in Claude Code"
+  fi
+else
+  cat > "$CLAUDE_MCP" << MCPEOF
+{
+  "mcpServers": {
+    "speckit": {
+      "command": "$SPECKIT_BIN",
+      "args": []
+    }
+  }
+}
+MCPEOF
+  info "MCP server configured for Claude Code (~/.claude/.mcp.json)"
+fi
+
 # --- Verify ---
 
 echo ""
